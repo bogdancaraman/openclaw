@@ -1,0 +1,40 @@
+name: Sync fork safely
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Sync fork safely
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TOKEN}@github.com/bogdancaraman/openclaw.git
+          cd openclaw
+
+          # Add upstream (IMPORTANT → correct upstream repo)
+          git remote add upstream https://github.com/pjasicek/openclaw.git
+
+          # Fetch updates
+          git fetch upstream
+
+          # Check correct branch (change if needed)
+          git checkout master
+
+          # Git identity
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+          # Merge safely
+          git merge upstream/master --no-edit || echo "Already up to date"
+
+          # Push back to fork
+          git push origin master
